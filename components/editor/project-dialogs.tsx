@@ -5,28 +5,29 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorDialog } from "@/components/editor/editor-dialog"
-import type { UseProjectDialogs } from "@/hooks/use-project-dialogs"
+import type { UseProjectActions } from "@/hooks/use-project-actions"
 
 interface ProjectDialogsProps {
-  dialogs: UseProjectDialogs
+  actions: UseProjectActions
 }
 
 const CREATE_FORM_ID = "create-project-form"
 const RENAME_FORM_ID = "rename-project-form"
 
-export function ProjectDialogs({ dialogs }: ProjectDialogsProps) {
+export function ProjectDialogs({ actions }: ProjectDialogsProps) {
   const {
     activeDialog,
     targetProject,
     name,
     slug,
+    suffix,
     isSubmitting,
     close,
     setName,
     submitCreate,
     submitRename,
     submitDelete,
-  } = dialogs
+  } = actions
 
   const handleOpenChange = (open: boolean) => {
     if (!open) close()
@@ -79,7 +80,8 @@ export function ProjectDialogs({ dialogs }: ProjectDialogsProps) {
           <p className="text-xs text-copy-muted">
             Slug:{" "}
             <span className="font-mono text-copy-secondary">
-              {slug || "your-project"}
+              {slug || ""}
+              {slug ? <span className="text-copy-muted">-{suffix}</span> : null}
             </span>
           </p>
         </form>
