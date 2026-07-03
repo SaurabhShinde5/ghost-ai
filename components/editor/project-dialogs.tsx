@@ -5,16 +5,16 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EditorDialog } from "@/components/editor/editor-dialog"
-import type { UseProjectDialogs } from "@/hooks/use-project-dialogs"
+import type { UseProjectActions } from "@/hooks/use-project-actions"
 
 interface ProjectDialogsProps {
-  dialogs: UseProjectDialogs
+  actions: UseProjectActions
 }
 
 const CREATE_FORM_ID = "create-project-form"
 const RENAME_FORM_ID = "rename-project-form"
 
-export function ProjectDialogs({ dialogs }: ProjectDialogsProps) {
+export function ProjectDialogs({ actions }: ProjectDialogsProps) {
   const {
     activeDialog,
     targetProject,
@@ -26,7 +26,7 @@ export function ProjectDialogs({ dialogs }: ProjectDialogsProps) {
     submitCreate,
     submitRename,
     submitDelete,
-  } = dialogs
+  } = actions
 
   const handleOpenChange = (open: boolean) => {
     if (!open) close()
@@ -77,9 +77,10 @@ export function ProjectDialogs({ dialogs }: ProjectDialogsProps) {
             />
           </div>
           <p className="text-xs text-copy-muted">
-            Slug:{" "}
+            Room ID:{" "}
             <span className="font-mono text-copy-secondary">
               {slug || "your-project"}
+              <span className="text-copy-muted">-…</span>
             </span>
           </p>
         </form>
