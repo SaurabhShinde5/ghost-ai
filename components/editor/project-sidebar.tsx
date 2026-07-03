@@ -15,6 +15,7 @@ interface ProjectSidebarProps {
   onCreateProject: () => void
   onRenameProject: (project: Project) => void
   onDeleteProject: (project: Project) => void
+  activeProjectId?: string
 }
 
 export function ProjectSidebar({
@@ -25,6 +26,7 @@ export function ProjectSidebar({
   onCreateProject,
   onRenameProject,
   onDeleteProject,
+  activeProjectId,
 }: ProjectSidebarProps) {
   return (
     <aside
@@ -63,6 +65,7 @@ export function ProjectSidebar({
                 <ProjectItem
                   key={project.id}
                   project={project}
+                  isActive={project.id === activeProjectId}
                   onRename={() => onRenameProject(project)}
                   onDelete={() => onDeleteProject(project)}
                 />
@@ -81,7 +84,11 @@ export function ProjectSidebar({
           {sharedProjects.length > 0 ? (
             <ul className="space-y-1">
               {sharedProjects.map((project) => (
-                <ProjectItem key={project.id} project={project} />
+                <ProjectItem
+                  key={project.id}
+                  project={project}
+                  isActive={project.id === activeProjectId}
+                />
               ))}
             </ul>
           ) : (
@@ -106,16 +113,31 @@ export function ProjectSidebar({
 
 interface ProjectItemProps {
   project: Project
+  isActive?: boolean
   onRename?: () => void
   onDelete?: () => void
 }
 
-function ProjectItem({ project, onRename, onDelete }: ProjectItemProps) {
+function ProjectItem({
+  project,
+  isActive,
+  onRename,
+  onDelete,
+}: ProjectItemProps) {
   return (
-    <li className="group flex items-center gap-1 rounded-xl px-2.5 py-2 transition-colors hover:bg-elevated">
+    <li
+      className={cn(
+        "group flex items-center gap-1 rounded-xl px-2.5 py-2 transition-colors hover:bg-elevated",
+        isActive && "bg-elevated"
+      )}
+    >
       <button
         type="button"
-        className="min-w-0 flex-1 truncate text-left text-sm text-copy-secondary"
+        aria-current={isActive ? "page" : undefined}
+        className={cn(
+          "min-w-0 flex-1 truncate text-left text-sm",
+          isActive ? "text-copy-primary" : "text-copy-secondary"
+        )}
         title={project.name}
       >
         {project.name}
