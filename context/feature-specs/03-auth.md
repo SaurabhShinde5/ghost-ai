@@ -8,16 +8,19 @@ Override Clerk appearance variables using the app’s existing CSS variables. Do
 
 Sign-in and sign-up pages:
 
-- large screens: simple two-panel layout
-- left: compact logo, tagline, short text-only feature list
-- right: centered Clerk form
-- small screens: form only
-- no gradients
-- no oversized hero sections
-- no feature cards
+- large screens: even 50/50 two-panel layout
+- left panel: differentiated from the dark right panel via a subtle brand-tinted
+  surface (surface color with a faint `--accent-primary-dim` radial glow) — not a
+  loud gradient
+- left content, top to bottom: brand logo mark, a short hero heading + tagline,
+  an icon-led feature list (icon in a brand-dim rounded square + title +
+  one-line description), and a footer copyright line
+- right panel: centered Clerk form on the base background
+- small screens: form only (left panel hidden)
 - no scroll-heavy layouts
 
-Keep the layout minimal and professional.
+All typography uses the UI-guideline fonts (Geist Sans for text, Geist Mono for
+code) via the app's font tokens. Keep the layout clean and professional.
 
 ## Implementation
 
