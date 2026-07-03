@@ -17,6 +17,8 @@ export interface UseProjectActions {
   name: string
   /** Live slug preview derived from `name` — also the room ID prefix. */
   slug: string
+  /** Stable unique suffix appended to `slug` to form the room ID. */
+  suffix: string
   /** True while a mutation request is in flight. */
   isSubmitting: boolean
   openCreate: () => void
@@ -49,6 +51,7 @@ export function useProjectActions(): UseProjectActions {
   const [activeDialog, setActiveDialog] = useState<ProjectDialog | null>(null)
   const [targetProject, setTargetProject] = useState<Project | null>(null)
   const [name, setName] = useState("")
+  const [suffix, setSuffix] = useState(generateSuffix)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const close = useCallback(() => {
@@ -61,6 +64,7 @@ export function useProjectActions(): UseProjectActions {
   const openCreate = useCallback(() => {
     setTargetProject(null)
     setName("")
+    setSuffix(generateSuffix())
     setActiveDialog("create")
   }, [])
 
@@ -81,7 +85,7 @@ export function useProjectActions(): UseProjectActions {
     if (!trimmed || isSubmitting) return
 
     setIsSubmitting(true)
-    const roomId = `${slugify(trimmed)}-${generateSuffix()}`
+    const roomId = `${slugify(trimmed)}-${suffix}`
 
     try {
       const response = await fetch("/api/projects", {
@@ -100,7 +104,7 @@ export function useProjectActions(): UseProjectActions {
     } catch {
       setIsSubmitting(false)
     }
-  }, [name, isSubmitting, close, router])
+  }, [name, suffix, isSubmitting, close, router])
 
   const submitRename = useCallback(async () => {
     const trimmed = name.trim()
@@ -161,6 +165,7 @@ export function useProjectActions(): UseProjectActions {
     targetProject,
     name,
     slug: slugify(name),
+    suffix,
     isSubmitting,
     openCreate,
     openRename,

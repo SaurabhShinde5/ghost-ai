@@ -20,6 +20,7 @@ export function ProjectDialogs({ actions }: ProjectDialogsProps) {
     targetProject,
     name,
     slug,
+    suffix,
     isSubmitting,
     close,
     setName,
@@ -77,10 +78,10 @@ export function ProjectDialogs({ actions }: ProjectDialogsProps) {
             />
           </div>
           <p className="text-xs text-copy-muted">
-            Room ID:{" "}
+            Slug:{" "}
             <span className="font-mono text-copy-secondary">
-              {slug || "your-project"}
-              <span className="text-copy-muted">-…</span>
+              {slug || ""}
+              {slug ? <span className="text-copy-muted">-{suffix}</span> : null}
             </span>
           </p>
         </form>
