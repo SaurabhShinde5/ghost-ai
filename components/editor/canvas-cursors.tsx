@@ -2,6 +2,7 @@
 
 import { useOthers } from "@liveblocks/react/suspense"
 import { useViewport, ViewportPortal } from "@xyflow/react"
+import { Loader2 } from "lucide-react"
 
 // Renders live cursors for every other participant in the room. The current
 // user is never rendered here (`useOthers` already excludes self). Each cursor
@@ -23,6 +24,8 @@ export function CanvasCursors() {
 
         const color = other.info?.color ?? "var(--accent-primary)"
         const name = other.info?.name ?? "Anonymous"
+        // A participant (human or the AI agent) actively running a generation.
+        const thinking = other.presence.thinking === true
 
         return (
           <div
@@ -35,9 +38,12 @@ export function CanvasCursors() {
           >
             <Pointer color={color} />
             <span
-              className="ml-3 mt-0.5 inline-block whitespace-nowrap rounded-md px-1.5 py-0.5 text-xs font-medium text-white shadow-sm"
+              className="ml-3 mt-0.5 inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-xs font-medium text-white shadow-sm"
               style={{ backgroundColor: color }}
             >
+              {thinking ? (
+                <Loader2 className="h-3 w-3 shrink-0 animate-spin" aria-hidden />
+              ) : null}
               {name}
             </span>
           </div>

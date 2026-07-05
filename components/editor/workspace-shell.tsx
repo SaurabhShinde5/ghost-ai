@@ -64,28 +64,29 @@ export function WorkspaceShell({
           isTemplatesOpen={isTemplatesOpen}
           onTemplatesOpenChange={setIsTemplatesOpen}
           onSaveStatusChange={setSaveStatus}
-        />
+        >
+          {isSidebarOpen ? (
+            <div
+              className="absolute inset-0 z-30 bg-black/40 lg:hidden"
+              aria-hidden
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          ) : null}
 
-        {isSidebarOpen ? (
-          <div
-            className="absolute inset-0 z-30 bg-black/40 lg:hidden"
-            aria-hidden
-            onClick={() => setIsSidebarOpen(false)}
+          <ProjectSidebar
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            ownedProjects={ownedProjects}
+            sharedProjects={sharedProjects}
+            activeProjectId={project.id}
+            onCreateProject={actions.openCreate}
+            onRenameProject={actions.openRename}
+            onDeleteProject={actions.openDelete}
           />
-        ) : null}
 
-        <ProjectSidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          ownedProjects={ownedProjects}
-          sharedProjects={sharedProjects}
-          activeProjectId={project.id}
-          onCreateProject={actions.openCreate}
-          onRenameProject={actions.openRename}
-          onDeleteProject={actions.openDelete}
-        />
-
-        <AiSidebar isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
+          {/* Inside the room so it can read the shared AI status feed. */}
+          <AiSidebar isOpen={isAiOpen} onClose={() => setIsAiOpen(false)} />
+        </CanvasRoom>
       </div>
 
       <ProjectDialogs actions={actions} />
