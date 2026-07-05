@@ -3,6 +3,7 @@
 import { useState } from "react"
 
 import { AiSidebar } from "@/components/editor/ai-sidebar"
+import { CanvasRoom } from "@/components/editor/canvas-room"
 import { ProjectDialogs } from "@/components/editor/project-dialogs"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
 import { ShareDialog } from "@/components/editor/share-dialog"
@@ -48,14 +49,7 @@ export function WorkspaceShell({
       />
 
       <div className="relative flex-1 overflow-hidden bg-base">
-        <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-          <p className="text-sm font-medium text-copy-secondary">
-            Canvas coming soon
-          </p>
-          <p className="text-xs text-copy-muted">
-            This is where the collaborative system design canvas will live.
-          </p>
-        </div>
+        <CanvasRoom roomId={project.id} />
 
         {isSidebarOpen ? (
           <div
