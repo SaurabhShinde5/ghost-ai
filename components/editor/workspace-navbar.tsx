@@ -7,7 +7,6 @@ import {
   Share2,
   Sparkles,
 } from "lucide-react"
-import { UserButton } from "@clerk/nextjs"
 
 import { SaveStatus } from "@/components/editor/save-status"
 import { Button } from "@/components/ui/button"
@@ -79,8 +78,6 @@ export function WorkspaceNavbar({
         >
           <Sparkles />
         </Button>
-
-        <UserButton />
       </div>
     </header>
   )
