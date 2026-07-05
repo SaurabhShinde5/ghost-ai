@@ -95,6 +95,9 @@
     --state-success: #34d399;
     --state-warning: #fbbf24;
 
+    /* Canvas edge stroke (context/ui-context.md → Edge Style) */
+    --edge-stroke: #f8fafc;
+
     --radius: 0.75rem;
 
     /* shadcn semantic tokens mapped onto the dark palette */

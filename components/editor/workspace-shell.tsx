@@ -3,6 +3,7 @@
 import { useState } from "react"
 
 import { AiSidebar } from "@/components/editor/ai-sidebar"
+import { CanvasRoom } from "@/components/editor/canvas-room"
 import { ProjectDialogs } from "@/components/editor/project-dialogs"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
 import { ShareDialog } from "@/components/editor/share-dialog"
@@ -34,6 +35,10 @@ export function WorkspaceShell({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isAiOpen, setIsAiOpen] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
+  // The templates modal opens from the navbar but imports through the canvas'
+  // collaborative state, so its open flag lives here and is threaded down into
+  // `CanvasRoom` where the import handler has access to node/edge sync.
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false)
   const actions = useProjectActions()
 
   return (
@@ -45,17 +50,15 @@ export function WorkspaceShell({
         isAiOpen={isAiOpen}
         onToggleAi={() => setIsAiOpen((open) => !open)}
         onShare={() => setIsShareOpen(true)}
+        onOpenTemplates={() => setIsTemplatesOpen(true)}
       />
 
       <div className="relative flex-1 overflow-hidden bg-base">
-        <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-          <p className="text-sm font-medium text-copy-secondary">
-            Canvas coming soon
-          </p>
-          <p className="text-xs text-copy-muted">
-            This is where the collaborative system design canvas will live.
-          </p>
-        </div>
+        <CanvasRoom
+          roomId={project.id}
+          isTemplatesOpen={isTemplatesOpen}
+          onTemplatesOpenChange={setIsTemplatesOpen}
+        />
 
         {isSidebarOpen ? (
           <div
