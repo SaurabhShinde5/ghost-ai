@@ -1,6 +1,7 @@
 "use client"
 
 import { FolderOpen, Pencil, Plus, Trash2, Users, X } from "lucide-react"
+import Link from "next/link"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -131,17 +132,17 @@ function ProjectItem({
         isActive && "bg-elevated"
       )}
     >
-      <button
-        type="button"
+      <Link
+        href={`/editor/${project.id}`}
         aria-current={isActive ? "page" : undefined}
         className={cn(
-          "min-w-0 flex-1 truncate text-left text-sm",
+          "min-w-0 flex-1 truncate text-left text-sm transition-colors hover:text-copy-primary",
           isActive ? "text-copy-primary" : "text-copy-secondary"
         )}
         title={project.name}
       >
         {project.name}
-      </button>
+      </Link>
 
       {onRename && onDelete ? (
         <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">

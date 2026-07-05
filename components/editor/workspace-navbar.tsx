@@ -9,7 +9,9 @@ import {
 } from "lucide-react"
 import { UserButton } from "@clerk/nextjs"
 
+import { SaveStatus } from "@/components/editor/save-status"
 import { Button } from "@/components/ui/button"
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave"
 
 interface WorkspaceNavbarProps {
   projectName: string
@@ -19,6 +21,8 @@ interface WorkspaceNavbarProps {
   onToggleAi: () => void
   onShare: () => void
   onOpenTemplates: () => void
+  /** Current canvas autosave status, shown as the Save button. */
+  saveStatus: CanvasSaveStatus
 }
 
 // Top bar for the `/editor/[roomId]` workspace: project sidebar toggle + project
@@ -31,6 +35,7 @@ export function WorkspaceNavbar({
   onToggleAi,
   onShare,
   onOpenTemplates,
+  saveStatus,
 }: WorkspaceNavbarProps) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-surface-border bg-surface px-3">
@@ -53,6 +58,8 @@ export function WorkspaceNavbar({
       </div>
 
       <div className="flex items-center gap-2">
+        <SaveStatus status={saveStatus} />
+
         <Button variant="outline" size="sm" onClick={onOpenTemplates}>
           <LayoutTemplate />
           Templates

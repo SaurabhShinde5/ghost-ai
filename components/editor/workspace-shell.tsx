@@ -8,6 +8,7 @@ import { ProjectDialogs } from "@/components/editor/project-dialogs"
 import { ProjectSidebar } from "@/components/editor/project-sidebar"
 import { ShareDialog } from "@/components/editor/share-dialog"
 import { WorkspaceNavbar } from "@/components/editor/workspace-navbar"
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave"
 import { useProjectActions } from "@/hooks/use-project-actions"
 import type { Project } from "@/types/project"
 
@@ -39,6 +40,9 @@ export function WorkspaceShell({
   // collaborative state, so its open flag lives here and is threaded down into
   // `CanvasRoom` where the import handler has access to node/edge sync.
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false)
+  // Canvas autosave runs inside the Liveblocks room (in `CanvasRoom`), so its
+  // status is lifted here to drive the navbar Save indicator.
+  const [saveStatus, setSaveStatus] = useState<CanvasSaveStatus>("idle")
   const actions = useProjectActions()
 
   return (
@@ -51,6 +55,7 @@ export function WorkspaceShell({
         onToggleAi={() => setIsAiOpen((open) => !open)}
         onShare={() => setIsShareOpen(true)}
         onOpenTemplates={() => setIsTemplatesOpen(true)}
+        saveStatus={saveStatus}
       />
 
       <div className="relative flex-1 overflow-hidden bg-base">
@@ -58,6 +63,7 @@ export function WorkspaceShell({
           roomId={project.id}
           isTemplatesOpen={isTemplatesOpen}
           onTemplatesOpenChange={setIsTemplatesOpen}
+          onSaveStatusChange={setSaveStatus}
         />
 
         {isSidebarOpen ? (

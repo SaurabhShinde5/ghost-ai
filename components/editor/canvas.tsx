@@ -1,6 +1,6 @@
 "use client"
 
-import { useRedo, useUndo } from "@liveblocks/react/suspense"
+import { useRedo, useUndo, useUpdateMyPresence } from "@liveblocks/react/suspense"
 import { useLiveblocksFlow } from "@liveblocks/react-flow"
 import {
   Background,
@@ -11,16 +11,22 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from "@xyflow/react"
-import { useCallback, useMemo, useRef } from "react"
-import type { DragEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
+import type { DragEvent, MouseEvent as ReactMouseEvent } from "react"
 
 import { CanvasControls } from "@/components/editor/canvas-controls"
+import { CanvasCursors } from "@/components/editor/canvas-cursors"
 import { CanvasEdge as CanvasEdgeRenderer } from "@/components/editor/canvas-edge"
 import { CanvasNode } from "@/components/editor/canvas-node"
 import { CanvasCallbacksProvider } from "@/components/editor/canvas-context"
+import { PresenceAvatars } from "@/components/editor/presence-avatars"
 import { ShapePanel } from "@/components/editor/shape-panel"
 import { StarterTemplatesModal } from "@/components/editor/starter-templates-modal"
 import type { CanvasTemplate } from "@/components/editor/starter-templates"
+import {
+  useCanvasAutosave,
+  type CanvasSaveStatus,
+} from "@/hooks/use-canvas-autosave"
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
 import {
   CANVAS_EDGE_TYPE,
@@ -29,34 +35,51 @@ import {
   SHAPE_DRAG_MIME,
   type CanvasEdge,
   type CanvasNode as CanvasNodeModel,
+  type CanvasSnapshot,
   type ShapeDragPayload,
 } from "@/types/canvas"
 
 import "@xyflow/react/dist/style.css"
 
 interface CanvasProps {
+  /** Project ID — also the Liveblocks room ID and canvas API path segment. */
+  projectId: string
   /** Whether the starter templates modal is open. */
   isTemplatesOpen: boolean
   /** Called when the templates modal requests a change to its open state. */
   onTemplatesOpenChange: (open: boolean) => void
+  /** Called whenever the canvas autosave status changes. */
+  onSaveStatusChange: (status: CanvasSaveStatus) => void
 }
 
 // React Flow canvas backed by Liveblocks Storage. Nodes and edges are synced
-// through `useLiveblocksFlow`; the canvas starts empty. The bottom shape panel
-// drags new nodes onto the canvas. Custom edge rendering, controls, and
-// persistence are intentionally out of scope here.
-export function Canvas({ isTemplatesOpen, onTemplatesOpenChange }: CanvasProps) {
+// through `useLiveblocksFlow`; the bottom shape panel drags new nodes onto the
+// canvas. Canvas state is autosaved to (and loaded from) Vercel Blob via the
+// project's canvas API route.
+export function Canvas({
+  projectId,
+  isTemplatesOpen,
+  onTemplatesOpenChange,
+  onSaveStatusChange,
+}: CanvasProps) {
   return (
     <ReactFlowProvider>
       <CanvasInner
+        projectId={projectId}
         isTemplatesOpen={isTemplatesOpen}
         onTemplatesOpenChange={onTemplatesOpenChange}
+        onSaveStatusChange={onSaveStatusChange}
       />
     </ReactFlowProvider>
   )
 }
 
-function CanvasInner({ isTemplatesOpen, onTemplatesOpenChange }: CanvasProps) {
+function CanvasInner({
+  projectId,
+  isTemplatesOpen,
+  onTemplatesOpenChange,
+  onSaveStatusChange,
+}: CanvasProps) {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<CanvasNodeModel, CanvasEdge>({
       suspense: true,
@@ -73,6 +96,78 @@ function CanvasInner({ isTemplatesOpen, onTemplatesOpenChange }: CanvasProps) {
   const redo = useRedo()
 
   useKeyboardShortcuts({ reactFlow, undo, redo })
+
+  // Broadcasts this user's live cursor position to the room via presence.
+  const updateMyPresence = useUpdateMyPresence()
+
+  // Debounced autosave of the canvas graph to Vercel Blob; the status drives the
+  // navbar Save indicator.
+  const saveStatus = useCanvasAutosave({ projectId, nodes, edges })
+
+  useEffect(() => {
+    onSaveStatusChange(saveStatus)
+  }, [saveStatus, onSaveStatusChange])
+
+  // Snapshot of the room state + sync handlers as they were on mount. The load
+  // effect reads from here so it can run exactly once (deps: just `projectId`)
+  // without listing `nodes`/`edges` — which it mutates — in its deps. Because the
+  // canvas mounts under `ClientSideSuspense` with `suspense: true`, these mount
+  // values already reflect the settled Liveblocks Storage state.
+  const loadContext = useRef({
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    reactFlow,
+  })
+
+  // Load the saved canvas once per room, but only into an empty room — if the
+  // room already has active collaboration (nodes or edges), skip the load
+  // entirely so we never overwrite live work. No `AbortController` here: the
+  // fetch is short and cancelling it mid-flight only surfaces a spurious
+  // `AbortError`; a `cancelled` flag guards against applying results post-unmount.
+  useEffect(() => {
+    const {
+      nodes: initialNodes,
+      edges: initialEdges,
+      onNodesChange: addNodes,
+      onEdgesChange: addEdges,
+      reactFlow: flow,
+    } = loadContext.current
+
+    if (initialNodes.length > 0 || initialEdges.length > 0) return
+
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}/canvas`)
+        if (cancelled || !response.ok) return
+
+        const data = (await response.json()) as { canvas: CanvasSnapshot | null }
+        if (cancelled || !data.canvas) return
+
+        if (data.canvas.nodes.length > 0) {
+          addNodes(data.canvas.nodes.map((item) => ({ type: "add", item })))
+        }
+        if (data.canvas.edges.length > 0) {
+          addEdges(data.canvas.edges.map((item) => ({ type: "add", item })))
+        }
+
+        window.setTimeout(() => {
+          if (!cancelled) {
+            void flow.fitView({ duration: 300, padding: 0.2 })
+          }
+        }, 80)
+      } catch {
+        // Load failures leave the room empty; the user can still start fresh.
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
 
   // Monotonic counter so IDs stay unique even when several nodes are dropped
   // within the same millisecond.
@@ -173,6 +268,23 @@ function CanvasInner({ isTemplatesOpen, onTemplatesOpenChange }: CanvasProps) {
     [nodes, edges, onNodesChange, onEdgesChange, reactFlow]
   )
 
+  // Broadcast the cursor in flow coordinates so it stays anchored to the canvas
+  // across pan/zoom for every viewer.
+  const onCanvasMouseMove = useCallback(
+    (event: ReactMouseEvent) => {
+      const cursor = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      })
+      updateMyPresence({ cursor })
+    },
+    [screenToFlowPosition, updateMyPresence]
+  )
+
+  const onCanvasMouseLeave = useCallback(() => {
+    updateMyPresence({ cursor: null })
+  }, [updateMyPresence])
+
   const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     event.dataTransfer.dropEffect = "copy"
@@ -228,6 +340,8 @@ function CanvasInner({ isTemplatesOpen, onTemplatesOpenChange }: CanvasProps) {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onDelete={onDelete}
+          onMouseMove={onCanvasMouseMove}
+          onMouseLeave={onCanvasMouseLeave}
           connectionMode={ConnectionMode.Loose}
           connectionLineStyle={{
             stroke: "var(--edge-stroke)",
@@ -237,7 +351,9 @@ function CanvasInner({ isTemplatesOpen, onTemplatesOpenChange }: CanvasProps) {
           fitView
         >
           <Background variant={BackgroundVariant.Dots} />
+          <CanvasCursors />
         </ReactFlow>
+        <PresenceAvatars />
         <CanvasControls />
         <ShapePanel />
         <StarterTemplatesModal
