@@ -107,3 +107,13 @@ export type CanvasNode = Node<CanvasNodeData, typeof CANVAS_NODE_TYPE>
 
 /** An edge on the collaborative canvas. */
 export type CanvasEdge = Edge<CanvasEdgeData, typeof CANVAS_EDGE_TYPE>
+
+/**
+ * The persisted canvas graph, stored as JSON in Vercel Blob (see
+ * architecture-context.md → Storage Model). Prisma keeps only the blob URL
+ * reference (`Project.canvasJsonPath`); this is the actual content.
+ */
+export interface CanvasSnapshot {
+  nodes: CanvasNode[]
+  edges: CanvasEdge[]
+}

@@ -10,6 +10,7 @@ import type { ReactNode } from "react"
 import { useState } from "react"
 
 import { Canvas } from "@/components/editor/canvas"
+import type { CanvasSaveStatus } from "@/hooks/use-canvas-autosave"
 
 interface CanvasRoomProps {
   /** Liveblocks room ID — the project ID. */
@@ -18,6 +19,8 @@ interface CanvasRoomProps {
   isTemplatesOpen: boolean
   /** Called when the templates modal requests a change to its open state. */
   onTemplatesOpenChange: (open: boolean) => void
+  /** Called whenever the canvas autosave status changes. */
+  onSaveStatusChange: (status: CanvasSaveStatus) => void
 }
 
 // Client wrapper that sets up the Liveblocks room around the collaborative
@@ -27,18 +30,21 @@ export function CanvasRoom({
   roomId,
   isTemplatesOpen,
   onTemplatesOpenChange,
+  onSaveStatusChange,
 }: CanvasRoomProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <RoomProvider
         id={roomId}
-        initialPresence={{ cursor: null, isThinking: false }}
+        initialPresence={{ cursor: null, thinking: false }}
       >
         <ConnectionGuard>
           <ClientSideSuspense fallback={<CanvasLoading />}>
             <Canvas
+              projectId={roomId}
               isTemplatesOpen={isTemplatesOpen}
               onTemplatesOpenChange={onTemplatesOpenChange}
+              onSaveStatusChange={onSaveStatusChange}
             />
           </ClientSideSuspense>
         </ConnectionGuard>

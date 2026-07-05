@@ -89,14 +89,17 @@ export function CanvasNode({ id, data, selected }: NodeProps<CanvasNodeType>) {
         handleStyle={{ width: 8, height: 8, borderRadius: 2, border: "none" }}
         lineStyle={{ borderColor: "var(--border-subtle)" }}
       />
-      {/* Subtle white handles on every side, hidden until the node is hovered. */}
+      {/* Subtle white handles on every side, hidden until the node is hovered.
+          `z-10` lifts them above `NodeShape` (rendered below) so the full hit
+          area of each side handle is grabbable — otherwise the shape covers the
+          inner half and only the top handle reliably starts a connection. */}
       {HANDLE_POSITIONS.map((handle) => (
         <Handle
           key={handle.id}
           id={handle.id}
           type="source"
           position={handle.position}
-          className="h-2! w-2! min-h-0! min-w-0! rounded-full border! opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+          className="z-10 h-2! w-2! min-h-0! min-w-0! rounded-full border! opacity-0 transition-opacity duration-150 group-hover:opacity-100"
           style={{
             backgroundColor: "var(--text-primary)",
             borderColor: "var(--bg-base)",
@@ -133,7 +136,6 @@ export function CanvasNode({ id, data, selected }: NodeProps<CanvasNodeType>) {
           )}
         </div>
       )}
-      <Handle type="source" position={Position.Bottom} className="opacity-0" />
     </div>
   )
 }
