@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Trigger.dev writes bundled build artifacts here (gitignored); never lint them.
+    ".trigger/**",
   ]),
 ]);
 

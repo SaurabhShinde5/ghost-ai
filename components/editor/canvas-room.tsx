@@ -21,16 +21,25 @@ interface CanvasRoomProps {
   onTemplatesOpenChange: (open: boolean) => void
   /** Called whenever the canvas autosave status changes. */
   onSaveStatusChange: (status: CanvasSaveStatus) => void
+  /**
+   * Rendered inside the Liveblocks room, as siblings of the canvas (e.g. the AI
+   * sidebar), so they can read room presence and the shared AI status feed.
+   * These sit outside the canvas' connection/loading boundary so they stay
+   * usable even while Storage is syncing or a connection error is shown.
+   */
+  children?: ReactNode
 }
 
 // Client wrapper that sets up the Liveblocks room around the collaborative
 // canvas: provider + room, a loading state while Storage syncs, and an error
-// fallback for connection failures.
+// fallback for connection failures. Extra room-scoped UI (the AI sidebar) can
+// be passed as `children` so it shares the same room without its own provider.
 export function CanvasRoom({
   roomId,
   isTemplatesOpen,
   onTemplatesOpenChange,
   onSaveStatusChange,
+  children,
 }: CanvasRoomProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
@@ -48,6 +57,7 @@ export function CanvasRoom({
             />
           </ClientSideSuspense>
         </ConnectionGuard>
+        {children}
       </RoomProvider>
     </LiveblocksProvider>
   )
