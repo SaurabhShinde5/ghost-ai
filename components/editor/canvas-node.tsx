@@ -18,6 +18,16 @@ const MIN_NODE_SIZE = 48
 
 const LABEL_PLACEHOLDER = "Add label"
 
+// Connection handles on all four sides. Every handle is a `source`; with the
+// canvas in `ConnectionMode.Loose`, a connection can be drawn from any handle to
+// any other handle regardless of type.
+const HANDLE_POSITIONS = [
+  { id: "top", position: Position.Top },
+  { id: "right", position: Position.Right },
+  { id: "bottom", position: Position.Bottom },
+  { id: "left", position: Position.Left },
+] as const
+
 // Renderer for the custom `canvasNode` type. The shape-specific visual is
 // delegated to `NodeShape` (CSS for rectangle/pill/circle, SVG for
 // diamond/hexagon/cylinder); this wrapper adds the connection handles, the
@@ -64,7 +74,7 @@ export function CanvasNode({ id, data, selected }: NodeProps<CanvasNodeType>) {
   const showOverlay = isEditing || !data.label
 
   return (
-    <div className="relative h-full w-full" onDoubleClick={startEditing}>
+    <div className="group relative h-full w-full" onDoubleClick={startEditing}>
       {selected && (
         <NodeColorToolbar
           activeColor={data.color}
@@ -79,7 +89,20 @@ export function CanvasNode({ id, data, selected }: NodeProps<CanvasNodeType>) {
         handleStyle={{ width: 8, height: 8, borderRadius: 2, border: "none" }}
         lineStyle={{ borderColor: "var(--border-subtle)" }}
       />
-      <Handle type="target" position={Position.Top} className="opacity-0" />
+      {/* Subtle white handles on every side, hidden until the node is hovered. */}
+      {HANDLE_POSITIONS.map((handle) => (
+        <Handle
+          key={handle.id}
+          id={handle.id}
+          type="source"
+          position={handle.position}
+          className="h-2! w-2! min-h-0! min-w-0! rounded-full border! opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+          style={{
+            backgroundColor: "var(--text-primary)",
+            borderColor: "var(--bg-base)",
+          }}
+        />
+      ))}
       <NodeShape
         shape={data.shape}
         fill={data.color}

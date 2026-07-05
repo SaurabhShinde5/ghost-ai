@@ -13,6 +13,8 @@ export interface CanvasCallbacks {
   updateNodeLabel: (id: string, label: string) => void
   /** Write a node's fill color back through the collaborative sync flow. */
   updateNodeColor: (id: string, color: string) => void
+  /** Write an edge's label back through the collaborative sync flow. */
+  updateEdgeLabel: (id: string, label: string) => void
 }
 
 const CanvasCallbacksContext = createContext<CanvasCallbacks | null>(null)

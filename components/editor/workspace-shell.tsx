@@ -35,6 +35,10 @@ export function WorkspaceShell({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isAiOpen, setIsAiOpen] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
+  // The templates modal opens from the navbar but imports through the canvas'
+  // collaborative state, so its open flag lives here and is threaded down into
+  // `CanvasRoom` where the import handler has access to node/edge sync.
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false)
   const actions = useProjectActions()
 
   return (
@@ -46,10 +50,15 @@ export function WorkspaceShell({
         isAiOpen={isAiOpen}
         onToggleAi={() => setIsAiOpen((open) => !open)}
         onShare={() => setIsShareOpen(true)}
+        onOpenTemplates={() => setIsTemplatesOpen(true)}
       />
 
       <div className="relative flex-1 overflow-hidden bg-base">
-        <CanvasRoom roomId={project.id} />
+        <CanvasRoom
+          roomId={project.id}
+          isTemplatesOpen={isTemplatesOpen}
+          onTemplatesOpenChange={setIsTemplatesOpen}
+        />
 
         {isSidebarOpen ? (
           <div

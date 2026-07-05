@@ -14,12 +14,20 @@ import { Canvas } from "@/components/editor/canvas"
 interface CanvasRoomProps {
   /** Liveblocks room ID — the project ID. */
   roomId: string
+  /** Whether the starter templates modal is open. */
+  isTemplatesOpen: boolean
+  /** Called when the templates modal requests a change to its open state. */
+  onTemplatesOpenChange: (open: boolean) => void
 }
 
 // Client wrapper that sets up the Liveblocks room around the collaborative
 // canvas: provider + room, a loading state while Storage syncs, and an error
 // fallback for connection failures.
-export function CanvasRoom({ roomId }: CanvasRoomProps) {
+export function CanvasRoom({
+  roomId,
+  isTemplatesOpen,
+  onTemplatesOpenChange,
+}: CanvasRoomProps) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <RoomProvider
@@ -28,7 +36,10 @@ export function CanvasRoom({ roomId }: CanvasRoomProps) {
       >
         <ConnectionGuard>
           <ClientSideSuspense fallback={<CanvasLoading />}>
-            <Canvas />
+            <Canvas
+              isTemplatesOpen={isTemplatesOpen}
+              onTemplatesOpenChange={onTemplatesOpenChange}
+            />
           </ClientSideSuspense>
         </ConnectionGuard>
       </RoomProvider>

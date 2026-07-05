@@ -104,6 +104,9 @@ function ShapeOutline({ shape, fill, stroke }: ShapeOutlineProps) {
       return (
         <>
           <path d="M0,14 L0,86 A50,14 0 0 1 100,86 L100,14 Z" {...common} />
+          {/* Full bottom ellipse so the base reads as a complete circle,
+              mirroring the top rim, rather than only the front arc. */}
+          <ellipse cx="50" cy="86" rx="50" ry="14" {...common} />
           <ellipse cx="50" cy="14" rx="50" ry="14" {...common} />
         </>
       )

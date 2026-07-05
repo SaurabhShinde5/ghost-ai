@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  LayoutTemplate,
   PanelLeftClose,
   PanelLeftOpen,
   Share2,
@@ -17,6 +18,7 @@ interface WorkspaceNavbarProps {
   isAiOpen: boolean
   onToggleAi: () => void
   onShare: () => void
+  onOpenTemplates: () => void
 }
 
 // Top bar for the `/editor/[roomId]` workspace: project sidebar toggle + project
@@ -28,6 +30,7 @@ export function WorkspaceNavbar({
   isAiOpen,
   onToggleAi,
   onShare,
+  onOpenTemplates,
 }: WorkspaceNavbarProps) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-surface-border bg-surface px-3">
@@ -50,6 +53,11 @@ export function WorkspaceNavbar({
       </div>
 
       <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={onOpenTemplates}>
+          <LayoutTemplate />
+          Templates
+        </Button>
+
         <Button variant="outline" size="sm" onClick={onShare}>
           <Share2 />
           Share
