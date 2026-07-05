@@ -69,6 +69,10 @@ export function useCanvasAutosave({
   // The last content we've saved (or the baseline on first render), so we skip
   // writes when nothing meaningful changed.
   const lastSaved = useRef<string | null>(null)
+  // ETag of the last snapshot we persisted, echoed back as `If-Match` so the
+  // server can make each save conditional (optimistic concurrency). Null until
+  // the first successful save, when the write is unconditional.
+  const etagRef = useRef<string | null>(null)
 
   useEffect(() => {
     const serialized = serializeCanvas(nodes, edges)
@@ -80,6 +84,7 @@ export function useCanvasAutosave({
     }
 
     if (serialized === lastSaved.current) {
+      setStatus((current) => (current === "saving" ? "saved" : current))
       return
     }
 
@@ -98,14 +103,35 @@ export function useCanvasAutosave({
         try {
           const response = await fetch(`/api/projects/${projectId}/canvas`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...(etagRef.current ? { "If-Match": etagRef.current } : {}),
+            },
             body: serialized,
           })
 
           if (cancelled) return
 
+          // A conflict means another save advanced the blob past the version
+          // this write was based on. Drop the stale ETag and retry
+          // unconditionally so the current (shared, authoritative) canvas state
+          // still persists.
+          if (response.status === 409) {
+            etagRef.current = null
+            if (attempt < MAX_ATTEMPTS) continue
+            setStatus("error")
+            return
+          }
+
           if (!response.ok) {
             throw new Error(`Canvas save failed: ${response.status}`)
+          }
+
+          const result = (await response.json().catch(() => null)) as {
+            etag?: string
+          } | null
+          if (result && typeof result.etag === "string") {
+            etagRef.current = result.etag
           }
 
           lastSaved.current = serialized

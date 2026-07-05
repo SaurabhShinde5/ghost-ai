@@ -1,4 +1,4 @@
-import { get, put } from "@vercel/blob";
+import { BlobPreconditionFailedError, get, put } from "@vercel/blob";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -74,6 +74,14 @@ export async function PUT(
     );
   }
 
+  // Optimistic concurrency control: the client echoes back the ETag it last saw
+  // (from a prior save) via `If-Match`. When present, the write is conditional —
+  // if the stored blob has since moved on, a stale retry or a slower concurrent
+  // autosave can't clobber the newer snapshot; the SDK throws
+  // `BlobPreconditionFailedError`, which we surface as `409 Conflict`. The first
+  // save has no known ETag and falls back to an unconditional overwrite.
+  const ifMatch = request.headers.get("if-match")?.trim() || undefined;
+
   try {
     const blob = await put(
       canvasBlobPath(projectId),
@@ -86,6 +94,7 @@ export async function PUT(
         contentType: "application/json",
         addRandomSuffix: false,
         allowOverwrite: true,
+        ...(ifMatch ? { ifMatch } : {}),
       },
     );
 
@@ -94,8 +103,20 @@ export async function PUT(
       data: { canvasJsonPath: blob.url },
     });
 
-    return NextResponse.json({ url: blob.url });
+    // Return the new ETag so the client can send it as `If-Match` on the next
+    // save; also expose it via the standard `ETag` response header.
+    return NextResponse.json(
+      { url: blob.url, etag: blob.etag },
+      { headers: { ETag: blob.etag } },
+    );
   } catch (error) {
+    if (error instanceof BlobPreconditionFailedError) {
+      return NextResponse.json(
+        { error: "Canvas was modified by a newer save" },
+        { status: 409 },
+      );
+    }
+
     console.error("Canvas save failed", error);
     return NextResponse.json(
       { error: "Failed to save canvas" },

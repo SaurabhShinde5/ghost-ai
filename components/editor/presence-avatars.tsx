@@ -1,8 +1,8 @@
 "use client"
 
 import { UserButton, useUser } from "@clerk/nextjs"
-import { useOthers } from "@liveblocks/react/suspense"
-import { useMemo } from "react"
+import { shallow, useOthersMapped } from "@liveblocks/react/suspense"
+import { useMemo, useState } from "react"
 
 // How many collaborator avatars to show before collapsing the rest into a
 // "+N" overflow chip.
@@ -32,26 +32,34 @@ function initialsOf(name: string): string {
 export function PresenceAvatars() {
   const { user } = useUser()
 
+  // Map each participant to only the avatar-relevant fields, shallow-compared
+  // per item so unrelated presence churn (e.g. live cursor moves) doesn't
+  // recompute the entry or re-render the avatar strip.
+  const mappedOthers = useOthersMapped(
+    (other): Collaborator => ({
+      id: other.id ?? "",
+      name: other.info?.name ?? "Anonymous",
+      avatar: other.info?.avatar ?? "",
+      color: other.info?.color ?? "var(--accent-primary)",
+    }),
+    shallow,
+  )
+
   // Collaborators = everyone in the room except the current Clerk user,
   // de-duplicated by user ID so multiple tabs/devices collapse to one avatar.
-  const collaborators = useOthers((others) => {
+  const collaborators = useMemo(() => {
     const seen = new Set<string>()
     const list: Collaborator[] = []
 
-    for (const other of others) {
+    for (const [, other] of mappedOthers) {
       if (!other.id || other.id === user?.id) continue
       if (seen.has(other.id)) continue
       seen.add(other.id)
-      list.push({
-        id: other.id,
-        name: other.info?.name ?? "Anonymous",
-        avatar: other.info?.avatar ?? "",
-        color: other.info?.color ?? "var(--accent-primary)",
-      })
+      list.push(other)
     }
 
     return list
-  })
+  }, [mappedOthers, user?.id])
 
   const { visible, overflow } = useMemo(
     () => ({
@@ -98,14 +106,18 @@ export function PresenceAvatars() {
 // fallback. A subtle ring keeps overlapping avatars readable on the dark canvas.
 function CollaboratorAvatar({ collaborator }: { collaborator: Collaborator }) {
   const ringClass = "ring-2 ring-base"
+  // Track a failed image load so a broken avatar URL falls back to initials
+  // instead of showing the browser's broken-image glyph.
+  const [imageFailed, setImageFailed] = useState(false)
 
-  if (collaborator.avatar) {
+  if (collaborator.avatar && !imageFailed) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={collaborator.avatar}
         alt={collaborator.name}
         title={collaborator.name}
+        onError={() => setImageFailed(true)}
         className={`h-8 w-8 rounded-full object-cover ${ringClass}`}
       />
     )

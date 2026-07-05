@@ -134,7 +134,13 @@ function ArchitectTab() {
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    // Ignore Enter while an IME composition is active so confirming a candidate
+    // (e.g. Japanese/Chinese/Korean input) doesn't send unfinished text.
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.nativeEvent.isComposing
+    ) {
       event.preventDefault()
       send()
     }
