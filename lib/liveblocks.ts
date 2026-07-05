@@ -47,12 +47,20 @@ const globalForLiveblocks = globalThis as unknown as {
 }
 
 /**
- * Cached Liveblocks Node client. Reused across hot reloads in development so we
- * don't leak a new client per request.
+ * Return the cached Liveblocks Node client, creating it on first use. The client
+ * is instantiated lazily rather than at module load so the missing-secret guard
+ * only trips on an actual request — never during `next build` page-data
+ * collection, which evaluates route modules without runtime env available.
+ *
+ * The instance is memoized on `globalThis` so it survives hot reloads in
+ * development without leaking a new client per request.
  */
-export const liveblocks =
-  globalForLiveblocks.liveblocks ?? createLiveblocksClient()
+export function getLiveblocks(): Liveblocks {
+  const client = globalForLiveblocks.liveblocks ?? createLiveblocksClient()
 
-if (process.env.NODE_ENV !== "production") {
-  globalForLiveblocks.liveblocks = liveblocks
+  if (process.env.NODE_ENV !== "production") {
+    globalForLiveblocks.liveblocks = client
+  }
+
+  return client
 }

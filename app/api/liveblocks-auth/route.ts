@@ -3,7 +3,7 @@ import { LiveblocksError } from "@liveblocks/node";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { getUserColor, liveblocks } from "@/lib/liveblocks";
+import { getLiveblocks, getUserColor } from "@/lib/liveblocks";
 import { getAccessibleProject, getCurrentIdentity } from "@/lib/project-access";
 
 interface AuthBody {
@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
   if (!project) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  const liveblocks = getLiveblocks();
 
   // Ensure the room exists, creating it only if needed. Private by default —
   // access is granted per session via the token below.
